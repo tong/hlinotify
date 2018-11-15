@@ -109,6 +109,13 @@ typedef Event = {
 	var name : String;
 }
 
+/**
+	Inode-based filesystem notification.
+
+	Linux kernel subsystem that acts to extend filesystems to notice changes to the filesystem, and report those changes to applications.
+	Inotify does not support recursively watching directories, meaning that a separate inotify watch must be created for every subdirectory.
+	Inotify does report some but not all events in sysfs and procfs.
+**/
 @:require(hl)
 class Inotify {
 
@@ -118,12 +125,19 @@ class Inotify {
 		fd = _init( (nonBlock ? NONBLOCK : 0) | (closeOnExec ? CLOEXEC : 0) );
 	}
 
+	/**
+		Adds a new watch, or modifies an existing watch, for the file whose location is specified in path.
+	**/
 	public function addWatch( path : String, mask : Mask ) : Int {
 		return @:privateAccess _add_watch( fd, FileSystem.fullPath( path ).bytes, mask );
 	}
 
-	public function removeWatch( wd : Int )
-		_rm_watch( fd, wd );
+	/**
+		Removes the watch associated with the watch descriptor `wd` from the inotify instance.
+	**/
+	public function removeWatch( wd : Int ) : Int {
+		return _rm_watch( fd, wd );
+	}
 
 	/**
 		Read available inotify events.
@@ -131,9 +145,11 @@ class Inotify {
 		@param  size  Buffer size (1 event: sizeof(struct inotify_event) + (event name length))
 	**/
 	public function read( size = 4096 ) : Array<Event> {
-		var events = new Array<Event>();
 		var buf = new hl.Bytes( size );
 		var length = _read( fd, buf, size );
+		if( length < 0 )
+			throw 'inotify read';
+		var events = new Array<Event>();
 		if( length > 0 ) {
 			@:privateAccess var bytes = new haxe.io.Bytes( buf, length );
 			var i = 0;
@@ -151,8 +167,12 @@ class Inotify {
 		return events;
 	}
 
-	public function close()
-		_close( fd );
+	/**
+		Remove all watches and close the file descriptor
+	**/
+	public function close() : Int {
+		return _close( fd );
+	}
 
 	@:hlNative("inotify","init")
 	static function _init( flags : Int ) : Int { return 0; }
@@ -161,12 +181,12 @@ class Inotify {
 	static function _add_watch( fd : Int, path : hl.Bytes, mask : Int ) : Int { return 0; }
 
 	@:hlNative("inotify","rm_watch")
-	static function _rm_watch( fd : Int, wd : Int ) {}
+	static function _rm_watch( fd : Int, wd : Int ) : Int { return 0; }
 
 	@:hlNative("inotify","read")
 	static function _read( fd : Int, buf : hl.Bytes, size : Int ) : Int { return 0; }
 
 	@:hlNative("inotify","close")
-	static function _close( fd : Int ) {}
+	static function _close( fd : Int ) : Int { return 0; }
 
 }

@@ -17,22 +17,22 @@ HL_PRIM int HL_NAME(add_watch)( int fd, vbyte *path, int mask ) {
 	return wd;
 }
 
+HL_PRIM int HL_NAME(rm_watch)( int fd, int wd ) {
+	return inotify_rm_watch( fd, wd );
+}
+
 HL_PRIM int HL_NAME(read)( int fd, vbyte *buf, int size ) {
 	ssize_t len;
 	len = read( fd, (char*)buf, size );
 	return len;
 }
 
-HL_PRIM void HL_NAME(rm_watch)( int fd, int wd ) {
-	inotify_rm_watch( fd, wd );
-}
-
-HL_PRIM void HL_NAME(close)( int fd ) {
-	close( fd );
+HL_PRIM int HL_NAME(close)( int fd ) {
+	return close( fd );
 }
 
 DEFINE_PRIM(_I32, init, _I32);
 DEFINE_PRIM(_I32, add_watch, _I32 _BYTES _I32);
+DEFINE_PRIM(_I32, rm_watch, _I32 _I32);
 DEFINE_PRIM(_I32, read, _I32 _BYTES _I32);
-DEFINE_PRIM(_VOID, rm_watch, _I32 _I32);
-DEFINE_PRIM(_VOID, close, _I32);
+DEFINE_PRIM(_I32, close, _I32);
