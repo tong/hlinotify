@@ -16,6 +16,10 @@ class App {
 			Sys.println( 'missing watch path argument' );
 			Sys.exit(1);
 		}
+		if( !FileSystem.exists( path ) ) {
+			Sys.println( 'watch path not found [$path]' );
+			Sys.exit(1);
+		}
 
 		var inotify = new Inotify();
 		var mask = MODIFY;
